@@ -1,0 +1,47 @@
+[
+  {
+    "id": "rag-definition",
+    "question": "RAG 是什么，为什么适合 AI 搜索？",
+    "intent": "definition",
+    "expected_keywords": ["检索增强生成", "外部知识", "减少幻觉", "来源"],
+    "expected_source_types": ["official", "academic"],
+    "min_sources": 2,
+    "pass_score": 0.75
+  },
+  {
+    "id": "vue-react-compare",
+    "question": "Vue 和 React 的区别是什么？",
+    "intent": "comparison",
+    "expected_keywords": ["响应式", "组件", "生态", "学习成本"],
+    "expected_source_types": ["official"],
+    "min_sources": 2,
+    "pass_score": 0.75
+  },
+  {
+    "id": "faiss-howto",
+    "question": "如何用 FAISS 做本地向量检索？",
+    "intent": "howto",
+    "expected_keywords": ["Embedding", "索引", "相似度", "Top-K"],
+    "expected_source_types": ["official", "code"],
+    "min_sources": 2,
+    "pass_score": 0.75
+  },
+  {
+    "id": "deepseek-news",
+    "question": "DeepSeek 最新 API 进展有哪些？",
+    "intent": "news",
+    "expected_keywords": ["DeepSeek", "API", "模型", "时效性"],
+    "expected_source_types": ["official", "news"],
+    "min_sources": 2,
+    "pass_score": 0.75
+  },
+  {
+    "id": "reranker-factual",
+    "question": "Reranker 在搜索系统中起什么作用？",
+    "intent": "factual",
+    "expected_keywords": ["重排序", "相关性", "候选文档", "Cross-Encoder"],
+    "expected_source_types": ["academic", "code"],
+    "min_sources": 2,
+    "pass_score": 0.75
+  }
+]

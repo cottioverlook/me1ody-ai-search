@@ -1,0 +1,42 @@
+[
+  {
+    "id": "rag-definition",
+    "answer": "RAG 是检索增强生成：先从外部知识中检索相关内容，再让模型基于这些来源生成回答。它适合 AI 搜索，因为能引入实时或私有知识，并通过来源引用减少幻觉 [1][2]。",
+    "sources": [
+      {"title": "RAG docs", "source_type": "official"},
+      {"title": "RAG paper", "source_type": "academic"}
+    ]
+  },
+  {
+    "id": "vue-react-compare",
+    "answer": "Vue 和 React 都围绕组件构建界面。Vue 内置响应式和模板体系，学习成本通常较低；React 更强调函数组件和生态组合能力，生态更庞大 [1][2]。",
+    "sources": [
+      {"title": "Vue official", "source_type": "official"},
+      {"title": "React official", "source_type": "official"}
+    ]
+  },
+  {
+    "id": "faiss-howto",
+    "answer": "用 FAISS 做本地向量检索通常分四步：先把文本转成 Embedding，再创建索引，把向量加入索引，最后按相似度搜索 Top-K 结果 [1][2]。",
+    "sources": [
+      {"title": "FAISS docs", "source_type": "official"},
+      {"title": "FAISS GitHub", "source_type": "code"}
+    ]
+  },
+  {
+    "id": "deepseek-news",
+    "answer": "DeepSeek API 的最新进展应以官方文档和新闻来源为准。回答时需要说明模型、API 能力变化和时效性限制，避免把旧信息当成最新结论 [1][2]。",
+    "sources": [
+      {"title": "DeepSeek official", "source_type": "official"},
+      {"title": "AI news", "source_type": "news"}
+    ]
+  },
+  {
+    "id": "reranker-factual",
+    "answer": "Reranker 的作用是对初步召回的候选文档进行重排序，提升最终上下文和用户问题的相关性。常见做法是用 Cross-Encoder 对 query-document 对打分 [1][2]。",
+    "sources": [
+      {"title": "Reranker paper", "source_type": "academic"},
+      {"title": "Reranker code", "source_type": "code"}
+    ]
+  }
+]

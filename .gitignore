@@ -1,0 +1,12 @@
+.env
+*.db
+__pycache__/
+*.pyc
+venv/
+node_modules/
+dist/
+.venv/
+*.log
+.pytest_cache/
+
+.firecrawl/

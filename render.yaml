@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: me1ody-ai-search-backend
+    runtime: docker
+    rootDir: backend
+    plan: free
+    healthCheckPath: /api/ready
+    envVars:
+      - key: APP_ENV
+        value: render
+      - key: LOG_LEVEL
+        value: INFO
+      - key: DATABASE_URL
+        value: sqlite+aiosqlite:////tmp/me1ody.db
+      - key: CORS_ORIGINS
+        value: '["*"]'
+      - key: EMBEDDING_BACKEND
+        value: hash
+      - key: DEMO_MODE
+        value: "false"
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "6"
+      - key: RATE_LIMIT_PER_DAY
+        value: "80"
+      - key: PUBLIC_TEST_TOKEN
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
+
+  - type: web
+    name: me1ody-ai-search-frontend
+    runtime: static
+    plan: free
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false

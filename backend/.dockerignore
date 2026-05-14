@@ -1,0 +1,12 @@
+venv
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+me1ody.db
+.env
+backend-dev*.log
+tests
+evals
+scripts
+me1ody_ai_search.egg-info
