@@ -52,4 +52,5 @@ async def ready():
         "status": "ready",
         "environment": settings.app_env,
         "database": "ok",
+        "demo_mode": settings.demo_mode,
     }

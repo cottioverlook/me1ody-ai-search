@@ -60,13 +60,20 @@ export function useSearch() {
       })
 
       if (!response.ok) {
+        let detail = ''
+        try {
+          const errorBody = await response.clone().json()
+          detail = errorBody.detail ? `：${errorBody.detail}` : ''
+        } catch {
+          // ignore non-JSON error responses
+        }
         if (response.status === 401) {
           throw new Error('测试密码不正确或未填写，请点击右上角钥匙图标设置。')
         }
         if (response.status === 429) {
           throw new Error('请求过于频繁，请稍后再试。')
         }
-        throw new Error(`Search failed: ${response.status}`)
+        throw new Error(`Search failed: ${response.status}${detail}`)
       }
 
       const reader = response.body!.getReader()
