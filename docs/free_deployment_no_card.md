@@ -31,7 +31,7 @@ Variables:
 ```env
 APP_ENV=huggingface
 LOG_LEVEL=INFO
-DATABASE_URL=sqlite+aiosqlite:////home/user/app/me1ody.db
+DATABASE_URL=sqlite+aiosqlite:////tmp/me1ody.db
 EMBEDDING_BACKEND=hash
 DEMO_MODE=true
 CORS_ORIGINS=["*"]

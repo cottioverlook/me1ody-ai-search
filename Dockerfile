@@ -9,7 +9,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_ROOT_USER_ACTION=ignore \
     APP_ENV=huggingface \
     LOG_LEVEL=INFO \
-    DATABASE_URL=sqlite+aiosqlite:////home/user/app/me1ody.db \
+    DATABASE_URL=sqlite+aiosqlite:////tmp/me1ody.db \
     EMBEDDING_BACKEND=hash \
     PORT=7860
 
