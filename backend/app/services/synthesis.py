@@ -135,10 +135,11 @@ async def save_turn(
     query: str,
     answer: str,
     sources: list[dict],
+    user_id: str = "anonymous",
 ) -> str:
     if not conversation_id:
         conversation_id = str(uuid.uuid4())
-        conv = Conversation(id=conversation_id, title=query[:60])
+        conv = Conversation(id=conversation_id, user_id=user_id, title=query[:60])
         db_session.add(conv)
 
     user_msg = Message(
@@ -167,6 +168,7 @@ async def run_search_pipeline(
     db_session: AsyncSession,
     embedding: EmbeddingService | Callable[[], EmbeddingService | None] | None = None,
     reranker: RerankerService | Callable[[], RerankerService | None] | None = None,
+    user_id: str = "anonymous",
 ):
     """Orchestrate: search -> chunk -> embed -> rerank -> synthesize -> followup -> save.
 
@@ -199,7 +201,7 @@ async def run_search_pipeline(
         yield sse_event("stage", stage_payload("answer", "done", "无可靠来源兜底"))
         full_answer = build_no_sources_answer(query)
         yield sse_event("token", {"text": full_answer})
-        conversation_id = await save_turn(db_session, conversation_id, query, full_answer, sources)
+        conversation_id = await save_turn(db_session, conversation_id, query, full_answer, sources, user_id)
         yield sse_event("done", {"conversation_id": conversation_id})
         return
 
@@ -261,7 +263,9 @@ async def run_search_pipeline(
 
         result = await db_session.execute(
             select(Message)
+            .join(Conversation, Message.conversation_id == Conversation.id)
             .where(Message.conversation_id == conversation_id)
+            .where(Conversation.user_id == user_id)
             .order_by(Message.created_at)
         )
         for msg in result.scalars():
@@ -289,6 +293,6 @@ async def run_search_pipeline(
     yield sse_event("followup", {"questions": followups})
 
     # 9. Save to database
-    conversation_id = await save_turn(db_session, conversation_id, query, full_answer, sources)
+    conversation_id = await save_turn(db_session, conversation_id, query, full_answer, sources, user_id)
 
     yield sse_event("done", {"conversation_id": conversation_id})

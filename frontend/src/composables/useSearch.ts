@@ -24,6 +24,7 @@ export function useSearch() {
   const isWaiting = ref(false)
   const conversationId = ref<string | null>(null)
   const error = ref('')
+  let controller: AbortController | null = null
 
   function updateStage(
     stage: PipelineStage,
@@ -48,11 +49,14 @@ export function useSearch() {
     isStreaming.value = true
     isWaiting.value = true
     error.value = ''
+    controller?.abort()
+    controller = new AbortController()
 
     try {
       const response = await fetch(apiUrl('/api/search'), {
         method: 'POST',
         headers: apiHeaders({ 'Content-Type': 'application/json' }),
+        signal: controller.signal,
         body: JSON.stringify({
           query,
           conversation_id: convId || undefined,
@@ -117,11 +121,20 @@ export function useSearch() {
         }
       }
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Unknown error'
+      if (e instanceof DOMException && e.name === 'AbortError') {
+        error.value = '搜索已停止'
+      } else {
+        error.value = e instanceof Error ? e.message : 'Unknown error'
+      }
     } finally {
       isStreaming.value = false
       isWaiting.value = false
+      controller = null
     }
+  }
+
+  function abortSearch() {
+    controller?.abort()
   }
 
   return {
@@ -135,5 +148,6 @@ export function useSearch() {
     conversationId,
     error,
     search,
+    abortSearch,
   }
 }

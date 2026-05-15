@@ -7,6 +7,7 @@ const router = createRouter({
   routes: [
     { path: '/', component: SearchHome },
     { path: '/search/:id?', component: ConversationView },
+    { path: '/share/:shareId', component: ConversationView },
   ],
 })
 

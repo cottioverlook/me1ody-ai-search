@@ -37,8 +37,11 @@ export interface Message {
 
 export interface Conversation {
   id: string
+  share_id: string
   title: string
   created_at: string
+  is_favorite: boolean
+  messages?: Message[]
 }
 
 export interface SearchRequest {

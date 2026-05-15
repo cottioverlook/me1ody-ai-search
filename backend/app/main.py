@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.models.db import Base, create_engine
+from app.models.db import Base, create_engine, ensure_schema_columns
 from app.routers import history, search, suggest
 from app.utils.logging import RequestLoggingMiddleware, configure_logging
 from app.utils.security import PublicAccessMiddleware
@@ -18,6 +18,7 @@ async def lifespan(app: FastAPI):
     engine = create_engine(settings.database_url)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    await ensure_schema_columns(engine)
     yield
     await engine.dispose()
 

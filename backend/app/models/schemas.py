@@ -27,12 +27,20 @@ class HistoryMessage(BaseModel):
 
 class ConversationResponse(BaseModel):
     id: str
+    share_id: str
     title: str
     created_at: str
+    is_favorite: bool
     messages: list[HistoryMessage]
 
 
 class ConversationListItem(BaseModel):
     id: str
+    share_id: str
     title: str
     created_at: str
+    is_favorite: bool
+
+
+class FavoriteRequest(BaseModel):
+    is_favorite: bool

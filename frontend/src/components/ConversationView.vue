@@ -7,8 +7,13 @@ import SourceCard from './SourceCard.vue'
 import FollowUpQuestions from './FollowUpQuestions.vue'
 import PipelineStatus from './PipelineStatus.vue'
 import { useSearch } from '../composables/useSearch'
-import { fetchConversation } from '../services/api'
-import type { CitationAudit, PipelineStep, Source, Message } from '../types'
+import {
+  deleteConversation,
+  fetchConversation,
+  fetchSharedConversation,
+  setConversationFavorite,
+} from '../services/api'
+import type { CitationAudit, Conversation, PipelineStep, Source, Message } from '../types'
 
 const route = useRoute()
 const router = useRouter()
@@ -24,6 +29,10 @@ interface ConversationTurn {
 
 const turns = ref<ConversationTurn[]>([])
 const conversationId = ref<string | null>(null)
+const shareId = ref<string | null>(null)
+const isFavorite = ref(false)
+const statusMessage = ref('')
+const isSharedView = ref(false)
 
 const {
   answer,
@@ -36,6 +45,7 @@ const {
   conversationId: streamConvId,
   error,
   search,
+  abortSearch,
 } = useSearch()
 
 function scrollToBottom() {
@@ -54,6 +64,13 @@ async function handleSearch(query: string) {
 
   await search(query, conversationId.value)
   conversationId.value = streamConvId.value
+  if (conversationId.value) {
+    try {
+      const data = await fetchConversation(conversationId.value)
+      shareId.value = data.share_id
+      isFavorite.value = data.is_favorite
+    } catch { /* keep streamed turn even if metadata refresh fails */ }
+  }
 
   const last = turns.value[turns.value.length - 1]
   last.answer = answer.value
@@ -75,8 +92,24 @@ function handleFollowUp(question: string) {
 async function loadConversation(id: string) {
   try {
     const data = await fetchConversation(id)
-    conversationId.value = id
-    const messages: Message[] = data.messages
+    applyConversation(data)
+  } catch { /* conversation not found */ }
+}
+
+async function loadSharedConversation(id: string) {
+  try {
+    const data = await fetchSharedConversation(id)
+    isSharedView.value = true
+    applyConversation(data)
+  } catch { /* shared conversation not found */ }
+}
+
+function applyConversation(data: Conversation) {
+    conversationId.value = data.id
+    shareId.value = data.share_id
+    isFavorite.value = data.is_favorite
+    turns.value = []
+    const messages: Message[] = data.messages || []
     for (let i = 0; i < messages.length; i++) {
       if (messages[i].role === 'user') {
         const assistant = messages[i + 1]?.role === 'assistant' ? messages[i + 1] : null
@@ -91,13 +124,14 @@ async function loadConversation(id: string) {
         if (assistant) i++
       }
     }
-  } catch { /* conversation not found */ }
 }
 
 onMounted(() => {
   const id = route.params.id as string
+  const shared = route.params.shareId as string
   const q = route.query.q as string
-  if (id) loadConversation(id)
+  if (shared) loadSharedConversation(shared)
+  else if (id) loadConversation(id)
   else if (q) handleSearch(q)
 })
 
@@ -128,10 +162,68 @@ function displayAudit(turn: ConversationTurn, index: number): CitationAudit | nu
 function displaySteps(turn: ConversationTurn, index: number): PipelineStep[] {
   return index === turns.value.length - 1 && isStreaming.value ? pipelineSteps.value : (turn.pipelineSteps || [])
 }
+
+function currentShareLink(): string {
+  return shareId.value
+    ? `${window.location.origin}/share/${shareId.value}`
+    : window.location.href
+}
+
+function turnMarkdown(turn: ConversationTurn): string {
+  const sourceLines = turn.sources.map((source, index) => (
+    `${index + 1}. ${source.title}\n   ${source.url}\n   ${source.snippet}`
+  )).join('\n\n')
+  return `# ${turn.query}\n\n${turn.answer}\n\n## Sources\n\n${sourceLines || 'No sources'}\n`
+}
+
+async function copyAnswer(turn: ConversationTurn) {
+  await navigator.clipboard.writeText(turn.answer)
+  statusMessage.value = '回答已复制'
+}
+
+async function copyShareLink() {
+  await navigator.clipboard.writeText(currentShareLink())
+  statusMessage.value = '分享链接已复制'
+}
+
+function downloadMarkdown(turn: ConversationTurn) {
+  const blob = new Blob([turnMarkdown(turn)], { type: 'text/markdown;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `${turn.query.slice(0, 24) || 'answer'}.md`
+  link.click()
+  URL.revokeObjectURL(url)
+  statusMessage.value = 'Markdown 已导出'
+}
+
+async function toggleFavorite() {
+  if (!conversationId.value || isSharedView.value) return
+  const next = !isFavorite.value
+  await setConversationFavorite(conversationId.value, next)
+  isFavorite.value = next
+  statusMessage.value = next ? '已收藏' : '已取消收藏'
+}
+
+async function removeConversation() {
+  if (!conversationId.value || isSharedView.value) return
+  if (!confirm('确定删除这条历史记录吗？')) return
+  await deleteConversation(conversationId.value)
+  router.push('/')
+}
+
+function stopSearch() {
+  abortSearch()
+}
+
+function regenerate(turn: ConversationTurn) {
+  if (isStreaming.value) return
+  handleSearch(turn.query)
+}
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto px-4 py-6">
+  <div class="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
     <!-- Sticky search bar -->
     <div class="sticky top-14 z-40 bg-gray-950/90 backdrop-blur-md py-4 -mx-4 px-4">
       <SearchBar compact @search="handleSearch" />
@@ -141,13 +233,53 @@ function displaySteps(turn: ConversationTurn, index: number): PipelineStep[] {
     <div v-if="error" class="mt-4 p-4 rounded-xl bg-red-900/20 border border-red-800 text-red-400 text-sm">
       {{ error }}
     </div>
+    <div v-if="statusMessage" class="mt-4 p-3 rounded-xl bg-emerald-900/20 border border-emerald-800 text-emerald-300 text-sm">
+      {{ statusMessage }}
+    </div>
 
     <!-- Conversation turns -->
     <div class="mt-6 space-y-12">
       <div v-for="(turn, i) in turns" :key="i">
         <!-- User query -->
-        <div class="mb-6">
-          <h2 class="text-xl font-semibold text-gray-100">{{ turn.query }}</h2>
+        <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <h2 class="text-xl font-semibold text-gray-100 break-words">{{ turn.query }}</h2>
+          <div v-if="i === turns.length - 1" class="flex flex-wrap gap-2">
+            <button
+              v-if="isStreaming"
+              @click="stopSearch"
+              class="px-3 py-1.5 rounded-lg border border-red-800/70 text-xs text-red-300 hover:bg-red-500/10"
+            >
+              停止
+            </button>
+            <button
+              v-else-if="turn.answer"
+              @click="regenerate(turn)"
+              class="px-3 py-1.5 rounded-lg border border-gray-700 text-xs text-gray-300 hover:border-indigo-500"
+            >
+              重新生成
+            </button>
+            <button
+              v-if="conversationId && !isSharedView"
+              @click="toggleFavorite"
+              class="px-3 py-1.5 rounded-lg border border-gray-700 text-xs text-gray-300 hover:border-amber-500"
+            >
+              {{ isFavorite ? '取消收藏' : '收藏' }}
+            </button>
+            <button
+              v-if="shareId"
+              @click="copyShareLink"
+              class="px-3 py-1.5 rounded-lg border border-gray-700 text-xs text-gray-300 hover:border-indigo-500"
+            >
+              分享
+            </button>
+            <button
+              v-if="conversationId && !isSharedView"
+              @click="removeConversation"
+              class="px-3 py-1.5 rounded-lg border border-gray-700 text-xs text-gray-300 hover:border-red-500"
+            >
+              删除
+            </button>
+          </div>
         </div>
 
         <!-- Loading state -->
@@ -173,8 +305,22 @@ function displaySteps(turn: ConversationTurn, index: number): PipelineStep[] {
               <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM4 11a1 1 0 100-2H3a1 1 0 000 2h1zM10 18a1 1 0 001-1v-1a1 1 0 10-2 0v1a1 1 0 001 1z"/>
             </svg>
             <span class="text-sm font-medium text-indigo-400">AI 综合回答</span>
+            <div v-if="displayAnswer(turn, i) && !(i === turns.length - 1 && isStreaming)" class="ml-auto flex gap-2">
+              <button
+                @click="copyAnswer(turn)"
+                class="px-2.5 py-1 rounded-lg border border-gray-700 text-xs text-gray-400 hover:text-gray-200"
+              >
+                复制
+              </button>
+              <button
+                @click="downloadMarkdown(turn)"
+                class="px-2.5 py-1 rounded-lg border border-gray-700 text-xs text-gray-400 hover:text-gray-200"
+              >
+                导出 MD
+              </button>
+            </div>
           </div>
-          <div class="bg-gray-900/50 rounded-2xl border border-gray-800 p-6">
+          <div class="bg-gray-900/50 rounded-2xl border border-gray-800 p-4 sm:p-6">
             <StreamingAnswer
               :content="displayAnswer(turn, i)"
               :sources="displaySources(turn, i)"

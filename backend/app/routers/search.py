@@ -1,17 +1,18 @@
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.models.db import create_engine, create_sessionmaker
+from app.models.db import Conversation, create_engine, create_sessionmaker
 from app.models.schemas import SearchRequest
 from app.services.deepseek_client import DeepseekService
 from app.services.demo import DemoDeepseekService, DemoTavilyService
 from app.services.embeddings import EmbeddingService
 from app.services.synthesis import run_search_pipeline
 from app.services.tavily_client import TavilyService
+from app.utils.user_context import get_user_id
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +69,8 @@ async def get_db():
 
 
 @router.post("/search")
-async def search(request: SearchRequest, db: AsyncSession = Depends(get_db)):
+async def search(request: SearchRequest, http_request: Request, db: AsyncSession = Depends(get_db)):
+    user_id = get_user_id(http_request)
     if not settings.demo_mode and (not settings.tavily_api_key or not settings.deepseek_api_key):
         from fastapi import HTTPException
 
@@ -76,6 +78,12 @@ async def search(request: SearchRequest, db: AsyncSession = Depends(get_db)):
             status_code=503,
             detail="Missing TAVILY_API_KEY or DEEPSEEK_API_KEY. Enable DEMO_MODE=true for offline demo.",
         )
+    if request.conversation_id:
+        from fastapi import HTTPException
+
+        conv = await db.get(Conversation, request.conversation_id)
+        if not conv or conv.user_id != user_id:
+            raise HTTPException(status_code=404, detail="Conversation not found")
 
     return StreamingResponse(
         run_search_pipeline(
@@ -86,6 +94,7 @@ async def search(request: SearchRequest, db: AsyncSession = Depends(get_db)):
             db_session=db,
             embedding=_get_embedding,
             reranker=_get_reranker,
+            user_id=user_id,
         ),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
