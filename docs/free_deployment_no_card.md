@@ -24,7 +24,7 @@
 
 进入 Space 的 `Settings`，找到 `Variables and secrets`。
 
-建议先用 Demo 模式跑通：
+建议先用 Demo 模式跑通。注意：如果你已经要切换到真实搜索，把 `DEMO_MODE` 改成 `false` 并重启 Space。
 
 Variables:
 

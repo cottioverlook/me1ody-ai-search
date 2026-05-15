@@ -11,7 +11,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     LOG_LEVEL=INFO \
     DATABASE_URL=sqlite+aiosqlite:////tmp/me1ody.db \
     EMBEDDING_BACKEND=hash \
-    DEMO_MODE=true \
+    DEMO_MODE=false \
     PORT=7860
 
 WORKDIR /home/user/app
