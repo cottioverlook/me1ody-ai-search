@@ -3,17 +3,38 @@ import type { Conversation } from '../types'
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 export const TEST_TOKEN_STORAGE_KEY = 'me1ody_test_token'
 export const USER_ID_STORAGE_KEY = 'me1ody_user_id'
+let memoryUserId = ''
+let memoryTestToken = ''
+
+function storageGet(key: string): string {
+  try {
+    return window.localStorage.getItem(key) || ''
+  } catch {
+    return ''
+  }
+}
+
+function storageSet(key: string, value: string): void {
+  try {
+    if (value) window.localStorage.setItem(key, value)
+    else window.localStorage.removeItem(key)
+  } catch {
+    if (key === USER_ID_STORAGE_KEY) memoryUserId = value
+    if (key === TEST_TOKEN_STORAGE_KEY) memoryTestToken = value
+  }
+}
 
 function createUserId(): string {
-  if (crypto?.randomUUID) return crypto.randomUUID()
+  const webCrypto = globalThis.crypto
+  if (webCrypto && typeof webCrypto.randomUUID === 'function') return webCrypto.randomUUID()
   return `user-${Date.now()}-${Math.random().toString(16).slice(2)}`
 }
 
 export function getUserId(): string {
-  let userId = localStorage.getItem(USER_ID_STORAGE_KEY)
+  let userId = storageGet(USER_ID_STORAGE_KEY) || memoryUserId
   if (!userId) {
     userId = createUserId()
-    localStorage.setItem(USER_ID_STORAGE_KEY, userId)
+    storageSet(USER_ID_STORAGE_KEY, userId)
   }
   return userId
 }
@@ -23,13 +44,12 @@ export function apiUrl(path: string): string {
 }
 
 export function getTestToken(): string {
-  return localStorage.getItem(TEST_TOKEN_STORAGE_KEY) || ''
+  return storageGet(TEST_TOKEN_STORAGE_KEY) || memoryTestToken
 }
 
 export function setTestToken(token: string): void {
   const trimmed = token.trim()
-  if (trimmed) localStorage.setItem(TEST_TOKEN_STORAGE_KEY, trimmed)
-  else localStorage.removeItem(TEST_TOKEN_STORAGE_KEY)
+  storageSet(TEST_TOKEN_STORAGE_KEY, trimmed)
 }
 
 export function apiHeaders(extra: HeadersInit = {}): HeadersInit {
