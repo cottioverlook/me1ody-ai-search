@@ -13,7 +13,7 @@ services:
       - key: DATABASE_URL
         value: sqlite+aiosqlite:////tmp/me1ody.db
       - key: CORS_ORIGINS
-        value: '["*"]'
+        value: '["https://me1ody-ai-search-frontend.onrender.com"]'
       - key: EMBEDDING_BACKEND
         value: hash
       - key: DEMO_MODE
@@ -23,6 +23,8 @@ services:
       - key: RATE_LIMIT_PER_DAY
         value: "80"
       - key: PUBLIC_TEST_TOKEN
+        sync: false
+      - key: SESSION_SECRET
         sync: false
       - key: TAVILY_API_KEY
         sync: false

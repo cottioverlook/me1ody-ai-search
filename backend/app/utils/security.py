@@ -49,9 +49,6 @@ class PublicAccessMiddleware(BaseHTTPMiddleware):
         return request.url.path.startswith("/api/") and request.url.path not in PUBLIC_API_EXEMPT_PATHS
 
     def _client_key(self, request: Request) -> str:
-        forwarded_for = request.headers.get("x-forwarded-for", "")
-        if forwarded_for:
-            return forwarded_for.split(",")[0].strip()
         return request.client.host if request.client else "unknown"
 
     def _rate_limited(self, client_key: str) -> bool:

@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     demo_mode: bool = False
     public_test_token: str = ""
+    session_secret: str = ""
     rate_limit_per_minute: int = 6
     rate_limit_per_day: int = 80
 

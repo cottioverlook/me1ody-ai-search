@@ -71,7 +71,7 @@ def test_public_access_middleware_requires_test_token(monkeypatch):
     assert client.get("/api/private", headers={"x-test-token": "secret"}).status_code == 200
 
 
-def test_public_access_middleware_rate_limits_by_ip(monkeypatch):
+def test_public_access_middleware_does_not_trust_spoofed_forwarded_for(monkeypatch):
     monkeypatch.setattr("app.config.settings.app_env", "render")
     monkeypatch.setattr("app.config.settings.public_test_token", "")
     monkeypatch.setattr("app.config.settings.rate_limit_per_minute", 1)
@@ -87,5 +87,4 @@ def test_public_access_middleware_rate_limits_by_ip(monkeypatch):
     client = TestClient(app)
 
     assert client.get("/api/private", headers={"x-forwarded-for": "203.0.113.1"}).status_code == 200
-    assert client.get("/api/private", headers={"x-forwarded-for": "203.0.113.1"}).status_code == 429
-    assert client.get("/api/private", headers={"x-forwarded-for": "203.0.113.2"}).status_code == 200
+    assert client.get("/api/private", headers={"x-forwarded-for": "203.0.113.2"}).status_code == 429

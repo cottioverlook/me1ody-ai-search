@@ -46,9 +46,10 @@ LOG_LEVEL=INFO
 APP_ENV=local
 EMBEDDING_BACKEND=sentence_transformers
 DEMO_MODE=false
+SESSION_SECRET=replace-with-a-random-secret-at-least-32-bytes
 ```
 
-不要提交 `.env` 或数据库文件。
+不要提交 `.env` 或数据库文件。`SESSION_SECRET` 用于签名 HttpOnly 匿名会话；已保存的搜索历史只会向持有对应签名会话 Cookie 的浏览器开放。
 
 Docker Compose 默认使用 `EMBEDDING_BACKEND=hash`，避免在容器构建时下载 PyTorch 和 HuggingFace 模型；本地开发默认仍使用 `sentence_transformers`。
 

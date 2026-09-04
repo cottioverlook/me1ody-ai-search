@@ -55,6 +55,7 @@ export function useSearch() {
     try {
       const response = await fetch(apiUrl('/api/search'), {
         method: 'POST',
+        credentials: 'include',
         headers: apiHeaders({ 'Content-Type': 'application/json' }),
         signal: controller.signal,
         body: JSON.stringify({

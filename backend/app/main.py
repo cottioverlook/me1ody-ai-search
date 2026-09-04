@@ -8,9 +8,13 @@ from app.models.db import Base, create_engine, ensure_schema_columns
 from app.routers import history, search, suggest
 from app.utils.logging import RequestLoggingMiddleware, configure_logging
 from app.utils.security import PublicAccessMiddleware
+from app.utils.user_context import AnonymousSessionMiddleware
 
 
 configure_logging(settings.log_level)
+
+if "*" in settings.cors_origins:
+    raise RuntimeError("CORS_ORIGINS must list the exact frontend origin when cookie sessions are enabled")
 
 
 @asynccontextmanager
@@ -27,11 +31,12 @@ app = FastAPI(title="Me1ody AI Search", lifespan=lifespan)
 
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(PublicAccessMiddleware)
+app.add_middleware(AnonymousSessionMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    allow_credentials="*" not in settings.cors_origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
