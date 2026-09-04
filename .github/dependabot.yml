@@ -2,9 +2,12 @@ version: 2
 updates:
   - package-ecosystem: pip
     directory: /backend
+    # Security updates remain enabled in the repository settings.
+    open-pull-requests-limit: 0
     schedule:
       interval: weekly
   - package-ecosystem: npm
     directory: /frontend
+    open-pull-requests-limit: 0
     schedule:
       interval: weekly
