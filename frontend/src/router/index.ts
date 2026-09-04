@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import SearchHome from '../components/SearchHome.vue'
-import ConversationView from '../components/ConversationView.vue'
+
+const ConversationView = () => import('../components/ConversationView.vue')
 
 const router = createRouter({
   history: createWebHistory(),

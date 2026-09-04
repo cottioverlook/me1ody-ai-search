@@ -34,7 +34,7 @@ LOG_LEVEL=INFO
 DATABASE_URL=sqlite+aiosqlite:////tmp/me1ody.db
 EMBEDDING_BACKEND=hash
 DEMO_MODE=true
-CORS_ORIGINS=["*"]
+CORS_ORIGINS=["https://你的-vercel-项目.vercel.app"]
 RATE_LIMIT_PER_MINUTE=6
 RATE_LIMIT_PER_DAY=80
 ```
@@ -43,6 +43,7 @@ Secrets:
 
 ```env
 PUBLIC_TEST_TOKEN=你发给同学的测试密码
+SESSION_SECRET=至少32字节的随机字符串
 TAVILY_API_KEY=你的 Tavily Key
 DEEPSEEK_API_KEY=你的 DeepSeek Key
 ```
@@ -137,7 +138,7 @@ Vercel 部署完成后，打开前端地址。
 - Hugging Face 免费 CPU Space 可能会冷启动，第一次打开会慢一些。
 - 当前数据库使用 SQLite，适合同学短期测试；长期使用建议改成托管 Postgres。
 - 如果真实搜索消耗太快，可以临时把后端 `DEMO_MODE=true`。
-- 如果遇到跨域问题，确认后端变量 `CORS_ORIGINS=["*"]`。
+- 如果遇到跨域问题，确认后端变量 `CORS_ORIGINS` 与实际 Vercel 前端地址完全一致；Cookie 会话不支持通配来源。
 - 如果前端提示测试密码错误，确认 Vercel 的 `VITE_API_BASE_URL` 指向的是正确后端，并且前端右上角保存了正确密码。
 
 ## 五、推荐上线顺序

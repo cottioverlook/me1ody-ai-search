@@ -46,6 +46,7 @@ git commit -m "Prepare Render deployment"
 
 ```env
 PUBLIC_TEST_TOKEN=你分发给同学的测试密码
+SESSION_SECRET=至少32字节的随机字符串
 TAVILY_API_KEY=你的 Tavily Key
 DEEPSEEK_API_KEY=你的 DeepSeek Key
 ```
@@ -63,6 +64,7 @@ https://me1ody-ai-search-backend.onrender.com
 ```
 
 如果 Render 实际生成的地址不同，等后端创建完成后，复制真实地址，更新前端服务的 `VITE_API_BASE_URL`，然后重新部署前端。
+同时把后端的 `CORS_ORIGINS` 设置为只包含真实前端地址的 JSON 数组，例如 `["https://你的前端服务.onrender.com"]`，不要使用 `*`，否则带凭据的会话请求会被拒绝。
 
 ## 第三步：检查服务
 
